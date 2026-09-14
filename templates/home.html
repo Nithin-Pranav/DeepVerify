@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepVerify - Multimodal Deepfake Detector</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; background: #f0f0f0; }
+        h1 { color: #2c3e50; text-align: center; }
+        .upload-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin: 20px 0; }
+        input[type="file"] { margin: 10px 0; }
+        button { padding: 12px 24px; background: #3498db; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+        button:hover { background: #2980b9; }
+        button:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .footer { text-align: center; margin-top: 50px; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+    <h1>🛡️ DeepVerify</h1>
+    <p style="text-align:center; color:#34495e;">Upload image, video, or audio to detect deepfakes using multimodal AI</p>
+        {% if error %}
+        <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; margin:20px 0; text-align:center;">
+            {{ error }}
+        </div>
+    {% endif %}
+
+        {% if history %}
+        <div style="background:#f8f9fa; padding:20px; margin:20px 0; border-radius:8px; border-left:4px solid #3498db;">
+            <h3 style="margin-top:0;">Recent Analyses</h3>
+            <ul style="list-style:none; padding:0;">
+                {% for item in history %}
+                    <li style="background:white; margin:8px 0; padding:12px; border-radius:5px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                        <strong>{{ item.label }}</strong> ({{ item.confidence }}) — {{ item.timestamp }}<br>
+                        <small>{{ item.details }}</small>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <div class="upload-box">
+        <form method="post" enctype="multipart/form-data" id="uploadForm" action="{% url 'predict' %}">
+            {% csrf_token %}
+            <p><label><strong>Image (jpg/png):</strong></label><br>
+            <input type="file" name="image" accept="image/*"></p>
+
+            <p><label><strong>Video (mp4):</strong></label><br>
+            <input type="file" name="video" accept="video/*"></p>
+
+            <p><label><strong>Audio (wav/flac/mp3):</strong></label><br>
+            <input type="file" name="audio" accept="audio/*"></p>
+
+            <center>
+                <button type="submit" id="analyzeBtn">Analyze for Deepfake</button>
+            </center>
+        </form>
+    </div>
+
+    <div class="footer">
+        Image • Video • Audio → Multimodal Fusion<br>
+        Powered by EfficientNet, CRNN, and Custom Ensemble
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function() {
+            const btn = document.getElementById('analyzeBtn');
+            btn.disabled = true;
+            btn.innerText = 'Analyzing…';
+        });
+    </script>
+</body>
+</html>

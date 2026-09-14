@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepVerify - Result</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; background: #f0f0f0; }
+        .result-box { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; }
+        h1 { color: #2c3e50; }
+        .label { font-size: 48px; font-weight: bold; margin: 20px 0; }
+        .real { color: #27ae60; }
+        .fake { color: #e74c3c; }
+        .uncertain { color: #f39c12; }
+        .confidence { font-size: 24px; margin: 20px 0; }
+        .details { margin: 30px 0; font-size: 18px; color: #34495e; line-height: 1.6; }
+        .modality { margin: 10px 0; font-size: 18px; }
+        .back { margin-top: 40px; }
+        a { color: #3498db; font-size: 18px; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h1>🛡️ DeepVerify Result</h1>
+    <div class="result-box">
+        <div class="label {{ result.label|lower }}">{{ result.label }}</div>
+        <div class="confidence">Confidence: {{ result.confidence }}</div>
+        <div class="details">{{ result.details }}</div>
+
+        <!-- Individual modality scores -->
+        {% if image_score is not None %}
+            <div class="modality">
+                <strong>Image:</strong> 
+                {% if image_score > 0.5 %}Fake{% else %}Real{% endif %} 
+                ({{ image_score|floatformat:3 }})
+            </div>
+        {% endif %}
+        {% if video_score is not None %}
+            <div class="modality">
+                <strong>Video:</strong> 
+                {% if video_score > 0.5 %}Fake{% else %}Real{% endif %} 
+                ({{ video_score|floatformat:3 }})
+            </div>
+        {% endif %}
+        {% if audio_score is not None %}
+            <div class="modality">
+                <strong>Audio:</strong> 
+                {% if audio_score > 0.5 %}Fake{% else %}Real{% endif %} 
+                ({{ audio_score|floatformat:3 }})
+            </div>
+        {% endif %}
+
+        <div class="back">
+            <a href="{% url 'home' %}">← Analyze another file</a>
+        </div>
+
+        {% if history %}
+        <div class="result-box" style="margin-top:40px;">
+            <h3>Recent Analyses</h3>
+            <ul style="list-style:none; padding:0;">
+                {% for item in history %}
+                    <li style="background:#f8f9fa; margin:10px 0; padding:15px; border-radius:8px;">
+                        <strong>{{ item.label }}</strong> — Confidence: {{ item.confidence }}<br>
+                        <small>{{ item.details }}</small><br>
+                        <em>{{ item.timestamp }}</em>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+    </div>
+            <!-- Confidence Bar Chart -->
+        <div style="margin: 40px 0; text-align: center;">
+            <h3>Confidence Breakdown</h3>
+            <canvas id="confidenceChart" width="500" height="250"></canvas>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            const ctx = document.getElementById('confidenceChart').getContext('2d');
+
+            // Safe numbers from Django
+            const fakeProb = Number({{ fake_prob|floatformat:3 }});
+            const realProb = Number({{ real_prob|floatformat:3 }});
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Fake', 'Real'],
+                    datasets: [{
+                        data: [fakeProb, realProb],
+                        backgroundColor: ['#e74c3c', '#27ae60'],
+                        borderColor: ['#c0392b', '#1e8449'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1,
+                            ticks: { stepSize: 0.2 }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.raw.toFixed(3);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        </script>
+</body>
+</html>
